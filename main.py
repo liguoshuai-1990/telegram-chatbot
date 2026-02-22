@@ -100,7 +100,7 @@ def split_message(text, max_length=4000):
     return chunks
 
 def format_for_telegram_simple(text):
-    """Simple mode: handle code blocks, rest as plain text"""
+    """Simple HTML mode: handle code blocks, escape HTML special chars"""
     result = []
     parts = re.split(r'(```(?:\w*)\n?.*?```)', text, flags=re.DOTALL)
     
@@ -108,12 +108,15 @@ def format_for_telegram_simple(text):
         if part.startswith('```'):
             match = re.match(r'```(\w*)\n?(.*?)```', part, re.DOTALL)
             if match:
-                code = match.group(2)
-                escaped = escape_markdown_v2(code.rstrip('\n'))
-                result.append(('code', f"```\n{escaped}\n```"))
+                code = match.group(2).rstrip('\n')
+                # Escape HTML and wrap in <code>
+                escaped = code.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+                result.append(('code', f"<code>\n{escaped}\n</code>"))
         else:
             if part.strip():
-                result.append(('text', escape_markdown_v2(part)))
+                # Simple HTML escape for regular text
+                escaped = part.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+                result.append(('text', escaped))
     
     return result
 # ========================================================
@@ -178,25 +181,22 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     logging.info(f"[HELP] User {user_id} requested help")
-    help_text = """*Telegram Gemini Bot*
+    help_text = """<b>Telegram Gemini Bot</b>
 
-*Commands:*
+<b>Commands:</b>
 /start - Start the bot
 /models - View and switch models
-/model \\<name\\> - Switch model directly
+/model &lt;name&gt; - Switch model directly
 /new - Clear conversation
 /help - Show this help
 
-*Features:*
-* Text conversation
-* Image analysis
-* Multiple models
-* Independent user sessions
-* Markdown formatting support"""
-    help_text = escape_markdown_v2(help_text)
-    # Restore escaped backslashes for Telegram
-    help_text = help_text.replace('\\<', '<').replace('\\>', '>')
-    await update.message.reply_text(help_text, parse_mode=ParseMode.MARKDOWN_V2)
+<b>Features:</b>
+• Text conversation
+• Image analysis
+• Multiple models
+• Independent user sessions
+• Markdown support"""
+    await update.message.reply_text(help_text, parse_mode=ParseMode.HTML)
 
 async def models_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Show available models with switch buttons"""
@@ -229,7 +229,7 @@ async def models_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         f"📋 *Available Models* \\({total} found\\)\n\nCurrent: `{current_display}`\n\nClick to switch:",
         reply_markup=reply_markup,
-        parse_mode=ParseMode.MARKDOWN_V2
+        parse_mode=ParseMode.HTML
     )
 
 async def model_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -251,7 +251,7 @@ async def model_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             display_name = get_model_display_name(new_model)
             await query.edit_message_text(
                 f"✅ Switched to: `{display_name}`\n\nMemory cleared, ready for new conversation\\!",
-                parse_mode=ParseMode.MARKDOWN_V2
+                parse_mode=ParseMode.HTML
             )
         except Exception as e:
             await query.edit_message_text(f"❌ Switch failed: {e}")
@@ -271,7 +271,7 @@ async def switch_model(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "model_name": new_model_name
         }
         display_name = get_model_display_name(new_model_name)
-        await update.message.reply_text(f"✅ Switched to: `{display_name}`", parse_mode=ParseMode.MARKDOWN_V2)
+        await update.message.reply_text(f"✅ Switched to: `{display_name}`", parse_mode=ParseMode.HTML)
     except Exception as e:
         await update.message.reply_text(f"❌ Switch failed: {e}")
 
@@ -317,12 +317,12 @@ async def chat_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             for chunk in chunks:
                 if part_type == 'code':
                     try:
-                        await update.message.reply_text(chunk, parse_mode=ParseMode.MARKDOWN_V2)
+                        await update.message.reply_text(chunk, parse_mode=ParseMode.HTML)
                     except Exception:
                         await update.message.reply_text(chunk.replace('\\', ''))
                 else:
                     try:
-                        await update.message.reply_text(chunk, parse_mode=ParseMode.MARKDOWN_V2)
+                        await update.message.reply_text(chunk, parse_mode=ParseMode.HTML)
                     except Exception:
                         await update.message.reply_text(chunk.replace('\\', ''))
 
@@ -354,7 +354,7 @@ if __name__ == '__main__':
         elif text == "❓ Help":
             await help_cmd(update, context)
         elif text == "⚙️ Settings":
-            await update.message.reply_text("⚙️ Settings: Use /model <name> to switch models", parse_mode=ParseMode.MARKDOWN_V2)
+            await update.message.reply_text("⚙️ Settings: Use /model <name> to switch models", parse_mode=ParseMode.HTML)
         else:
             # Not a menu button, treat as normal message
             await chat_handler(update, context)
