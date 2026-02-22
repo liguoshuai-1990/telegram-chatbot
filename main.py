@@ -10,7 +10,7 @@ import google.generativeai as genai
 # ================= Config =================
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
-DEFAULT_MODEL = 'gemini-2.0-flash-latest'
+DEFAULT_MODEL = 'gemini-3-flash-preview'
 # ===========================================
 
 logging.basicConfig(
