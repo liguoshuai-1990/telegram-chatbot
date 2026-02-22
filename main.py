@@ -10,14 +10,14 @@ import google.generativeai as genai
 # ================= Config =================
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
-DEFAULT_MODEL = 'gemini-2.0-flash'
+DEFAULT_MODEL = 'gemini-2.0-flash-latest'
 # ===========================================
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', 
     level=logging.INFO,
     handlers=[
-        logging.FileHandler('/home/zrlgs/telegram-chatbot/bot.log'),
+        logging.FileHandler('bot.log'),
         logging.StreamHandler()
     ]
 )

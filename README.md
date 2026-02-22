@@ -79,7 +79,6 @@ sudo systemctl start telegram-bot.service
 ```
 telegram-chatbot/
 ├── main.py          # 主程序
-├── models.py        # 数据模型
 ├── .venv/环境
 ├── bot           # 虚拟.log          # 运行日志
 └── README.md        # 本文件
